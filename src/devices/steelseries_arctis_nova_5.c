@@ -30,7 +30,6 @@ static int arctis_nova_5_send_inactive_time(hid_device* device_handle, uint8_t n
 static int arctis_nova_5_send_equalizer_preset(hid_device* device_handle, uint8_t num);
 static int arctis_nova_5_send_equalizer(hid_device* device_handle, struct equalizer_settings* settings);
 static BatteryInfo arctis_nova_5_request_battery(hid_device* device_handle);
-static int arctis_nova_5_request_chatmix(hid_device* device_handle);
 static int arctis_nova_5_bluetooth_when_powered_on(hid_device* device_handle, uint8_t num);
 static int arctis_nova_5_bluetooth_call_volume(hid_device* device_handle, uint8_t num);
 static int arctis_nova_5_mic_light(hid_device* device_handle, uint8_t num);
@@ -47,10 +46,9 @@ void arctis_nova_5_init(struct device** device)
 
     strncpy(device_arctis.device_name, "SteelSeries Arctis Nova 5", sizeof(device_arctis.device_name));
 
-    device_arctis.capabilities                                           = B(CAP_SIDETONE) | B(CAP_BATTERY_STATUS) | B(CAP_CHATMIX_STATUS) | B(CAP_INACTIVE_TIME) | B(CAP_EQUALIZER) | B(CAP_EQUALIZER_PRESET) | B(CAP_MICROPHONE_MUTE_LED_BRIGHTNESS) | B(CAP_MICROPHONE_VOLUME) | B(CAP_VOLUME_LIMITER) | B(CAP_BT_WHEN_POWERED_ON) | B(CAP_BT_CALL_VOLUME);
+    device_arctis.capabilities                                           = B(CAP_SIDETONE) | B(CAP_BATTERY_STATUS)  | B(CAP_INACTIVE_TIME) | B(CAP_EQUALIZER) | B(CAP_EQUALIZER_PRESET) | B(CAP_MICROPHONE_MUTE_LED_BRIGHTNESS) | B(CAP_MICROPHONE_VOLUME) | B(CAP_VOLUME_LIMITER) | B(CAP_BT_WHEN_POWERED_ON) | B(CAP_BT_CALL_VOLUME);
     device_arctis.capability_details[CAP_SIDETONE]                       = (struct capability_detail) { .usagepage = 0xffc0, .usageid = 0x1, .interface = 3 };
     device_arctis.capability_details[CAP_BATTERY_STATUS]                 = (struct capability_detail) { .usagepage = 0xffc0, .usageid = 0x1, .interface = 3 };
-    device_arctis.capability_details[CAP_CHATMIX_STATUS]                 = (struct capability_detail) { .usagepage = 0xffc0, .usageid = 0x1, .interface = 3 };
     device_arctis.capability_details[CAP_INACTIVE_TIME]                  = (struct capability_detail) { .usagepage = 0xffc0, .usageid = 0x1, .interface = 3 };
     device_arctis.capability_details[CAP_EQUALIZER_PRESET]               = (struct capability_detail) { .usagepage = 0xffc0, .usageid = 0x1, .interface = 3 };
     device_arctis.capability_details[CAP_EQUALIZER]                      = (struct capability_detail) { .usagepage = 0xffc0, .usageid = 0x1, .interface = 3 };
@@ -62,7 +60,6 @@ void arctis_nova_5_init(struct device** device)
 
     device_arctis.send_sidetone                       = &arctis_nova_5_send_sidetone;
     device_arctis.request_battery                     = &arctis_nova_5_request_battery;
-    device_arctis.request_chatmix                     = &arctis_nova_5_request_chatmix;
     device_arctis.send_inactive_time                  = &arctis_nova_5_send_inactive_time;
     device_arctis.send_equalizer_preset               = &arctis_nova_5_send_equalizer_preset;
     device_arctis.send_equalizer                      = &arctis_nova_5_send_equalizer;
@@ -136,36 +133,6 @@ static BatteryInfo arctis_nova_5_request_battery(hid_device* device_handle)
         info.level = map(bat, BATTERY_MIN, BATTERY_MAX, 0, 100);
 
     return info;
-}
-
-static int arctis_nova_5_request_chatmix(hid_device* device_handle)
-{
-    // request for setting new mix 0x45
-    // max chat 0x00, 0x64
-    // max game 0x64, 0x00
-    // neutral 0x64, 0x64
-    // read device info
-    unsigned char data_read[STATUS_BUF_SIZE];
-    int r = arctis_nova_5_read_device_status(device_handle, data_read);
-
-    if (r < 0)
-        return r;
-
-    if (r == 0)
-        return HSC_READ_TIMEOUT;
-
-    // it's a slider, but setting for game and chat
-    // are reported as separate values, we combine
-    // them back into one setting of the slider
-
-    // the two values are between 0 and 100,
-    // we translate that to a value from 0 to 128
-    // with "64" being in the middle
-
-    int game = map(data_read[4], 0, 100, 0, 64);
-    int chat = map(data_read[5], 0, 100, 0, -64);
-
-    return 64 - (chat + game);
 }
 
 static int arctis_nova_5_send_equalizer_preset(hid_device* device_handle, uint8_t num)
