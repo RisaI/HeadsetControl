@@ -58,12 +58,15 @@ void arctis_nova_5_init(struct device** device)
     device_arctis.capability_details[CAP_BT_WHEN_POWERED_ON]             = (struct capability_detail) { .usagepage = 0xffc0, .usageid = 0x1, .interface = 3 };
     device_arctis.capability_details[CAP_BT_CALL_VOLUME]                 = (struct capability_detail) { .usagepage = 0xffc0, .usageid = 0x1, .interface = 3 };
 
+    // are working
     device_arctis.send_sidetone                       = &arctis_nova_5_send_sidetone;
     device_arctis.request_battery                     = &arctis_nova_5_request_battery;
     device_arctis.send_inactive_time                  = &arctis_nova_5_send_inactive_time;
+    device_arctis.send_microphone_mute_led_brightness = &arctis_nova_5_mic_light;
+
+    // unsure
     device_arctis.send_equalizer_preset               = &arctis_nova_5_send_equalizer_preset;
     device_arctis.send_equalizer                      = &arctis_nova_5_send_equalizer;
-    device_arctis.send_microphone_mute_led_brightness = &arctis_nova_5_mic_light;
     device_arctis.send_microphone_volume              = &arctis_nova_5_mic_volume;
     device_arctis.send_volume_limiter                 = &arctis_nova_5_volume_limiter;
     device_arctis.send_bluetooth_when_powered_on      = &arctis_nova_5_bluetooth_when_powered_on;
